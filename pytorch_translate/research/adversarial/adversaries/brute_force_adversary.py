@@ -85,6 +85,7 @@ class BruteForceAdversary(BaseAdversary):
         _, best_positions = score_at_each_step.topk(
             max_swaps
         )
+        best_positions = torch.clamp(best_positions, 0, src_length - 1)
         # 6. Create adversarial examples.
         adv_tokens = src_tokens.clone()
         # Assign new values

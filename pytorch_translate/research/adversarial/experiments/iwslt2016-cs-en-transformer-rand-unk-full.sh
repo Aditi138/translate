@@ -32,17 +32,16 @@ python $PTT_DIR/research/adversarial/adv_train.py \
   --args-verbosity 2 \
   --no-progress-bar  \
   --arch ptt_transformer \
-  --max-tokens 4000 \
+  --max-tokens 3000 \
   --max-sentences-valid 10 \
-  --max-epoch 60 \
-  --stop-time-hr 70 \
+  --max-epoch 100 \
   --optimizer adam \
   --adam-betas '(0.9, 0.98)' \
   --clip-norm 0.0 \
   --lr-scheduler inverse_sqrt \
   --warmup-init-lr 1e-07 \
   --warmup-updates 4000 \
-  --lr 0.0005 \
+  --lr 0.0002 \
   --min-lr 1e-09 \
   --dropout 0.3 \
   --weight-decay 0.0001 \

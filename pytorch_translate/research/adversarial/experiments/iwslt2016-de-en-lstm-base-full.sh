@@ -34,8 +34,8 @@ python $PTT_DIR/train.py \
   --arch rnn \
   --cell-type lstm \
   --sequence-lstm  \
-  --max-tokens 5000 \
-  --max-sentences 64 \
+  --max-tokens 3000 \
+  --max-sentences-valid 10 \
   --max-epoch 999999 \
   --stop-time-hr 140 \
   --optimizer adam \

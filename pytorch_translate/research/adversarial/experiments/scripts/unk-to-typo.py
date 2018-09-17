@@ -81,7 +81,7 @@ def main():
             new_adv_words = []
             for src_word, adv_word in zip(src_words, adv_words):
                 # Check whether the current adversarial word is an unk
-                # (if not then it is the same as the original input)
+                # (if not no need to change it)
                 if adv_word == args.unk_token:
                     if src_word in dic:
                         # If the word is in the dictionary this was probably
@@ -94,7 +94,7 @@ def main():
                         # the original word
                         new_adv_words.append(src_word)
                 else:
-                    new_adv_words.append(src_word)
+                    new_adv_words.append(adv_word)
             # Print the result to stdout
             print(" ".join(new_adv_words))
 

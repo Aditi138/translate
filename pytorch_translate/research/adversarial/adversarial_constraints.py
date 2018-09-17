@@ -155,7 +155,9 @@ class AdversarialConstraints(object):
         # Otherwise:
         if len(allowed) > 0:
             # Concatenate all allowed tokens at each position b,t
-            allowed_ids = torch.cat(allowed, dim=2)
+            allowed_ids = torch.clamp(
+                torch.cat(allowed, dim=2), 0, len(self.src_dict) - 1
+            )
             # Now create a mask of shape B x T x |V|
             not_allowed = torch.ones_like(scores, dtype=torch.uint8)
             # Make sure the allowed words have a mask of 0

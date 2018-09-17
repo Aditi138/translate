@@ -97,7 +97,7 @@ function attack (){
     --quiet \
     --seed $SEED \
     --max-sentences 32 \
-    --max-tokens 4000 \
+    --max-tokens 2000 \
     --adversarial-output-file $OUT_FILE
 }
 
@@ -114,9 +114,10 @@ function translate (){
     --source-text-file $SRC_FILE \
     --target-text-file $TMP_DIR/data.${TRG_LANG} \
     $TRANSLATE_OPTIONS \
+    --unk-replace \
     --quiet \
     --max-sentences 64 \
-    --max-tokens 4000 \
+    --max-tokens 2000 \
     --translation-output-file "${OUT_FILE}"
 }
 

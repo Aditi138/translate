@@ -17,7 +17,7 @@ SUBWORD_NMT=subword-nmt
 METEOR_DIR=meteor-1.5
 # Checkpoints folder 
 # (will contain separate checkpoint folders for each experiment)
-CHECKPOINTS=checkpoints
+CHECKPOINTS=/projects/tir3/users/pmichel1/checkpoints
 # Root of the IWSLT2016 data downloaded with scripts/prepare-iwslt2016.sh
 # Should contain one sub folder for each language pair
 IWSLT2016_DIR=iwslt2016

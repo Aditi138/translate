@@ -27,8 +27,9 @@ cat $TMP_DIR/data.$SRC \
   | perl $MOSES_SCRIPTS/tokenizer/deescape-special-chars.perl \
   > /tmp/$UNIQUE_ID.src.tok
 
-for unk_src in $TMP_DIR/*unk-only.*.$SRC
+for unk_src in $TMP_DIR/*.$SRC
 do
+  echo $unk_src
   # De-escape special chars to make sure that punctuation is
   # handled correctly at the character level (eg &apos; -> '
   cat $unk_src | perl $MOSES_SCRIPTS/tokenizer/deescape-special-chars.perl \
