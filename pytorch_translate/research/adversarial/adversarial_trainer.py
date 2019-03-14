@@ -8,7 +8,7 @@ import torch.nn.functional as F
 
 from fairseq import distributed_utils
 from fairseq.trainer import Trainer
-from fairseq.meters import AverageMeter, TimeMeter
+from fairseq.meters import AverageMeter, TimeMeter, StopwatchMeter
 
 from .adversarial_utils import tile, detach_sample, clone_sample
 
@@ -41,7 +41,7 @@ class AdversarialTrainer(Trainer):
         # TODO: is there an easy way to make this available for CPU. And if so,
         #       why is training on CPU not supported by fairseq?
         self.task = task
-        self.model = model.cuda()
+        self._model = model.cuda()
         self.criterion = criterion.cuda() if criterion is not None else None
         self.adversarial_criterion = adversarial_criterion.cuda()
         self.adversary = adversary.cuda()
@@ -62,6 +62,19 @@ class AdversarialTrainer(Trainer):
         self._num_updates = 0
         self._optim_history = None
         self._optimizer = None
+        self._wrapped_model = None
+
+
+    @property
+    def model(self):
+        if self._wrapped_model is None:
+            if getattr(self.args, "distributed_world_size", 1) > 1:
+                self._wrapped_model = models.DistributedFairseqModel(
+                    self.args, self._model,
+                )
+            else:
+                self._wrapped_model = self._model
+        return self._wrapped_model
 
     def init_meters(self):
         """Initialize the meters for logging"""
@@ -78,6 +91,7 @@ class AdversarialTrainer(Trainer):
         self.meters['clip'] = AverageMeter()   # % of updates clipped
         self.meters['oom'] = AverageMeter()    # out of memory
         self.meters['wall'] = TimeMeter()      # wall time in seconds
+        self.meters['train_wall'] = StopwatchMeter()  # train wall time in seconds
 
     def gen_adversarial_examples(self, sample):
         """Get adversarial examples from existing sample"""
@@ -274,7 +288,7 @@ class AdversarialTrainer(Trainer):
             # Get adv input
             adv_input, ooms_adv = self.gen_adversarial_examples(detach_sample(sample))
 
-            if self.args.accumulate_adv_gradient:
+            if self.args.accumulate_adv_gradient or self.adv_weight == 1:
                 # Perform a forward/backward pass on the adversarial input
                 adv_sample = clone_sample(sample)
                 adv_sample["net_input"]["src_tokens"] = adv_input
@@ -286,8 +300,8 @@ class AdversarialTrainer(Trainer):
                     adv_sample["net_input"]["src_lengths"]
                 ).float()
                 # Compute parameter gradients on the adversarial input
-                super(AdversarialTrainer, self).train_step(
-                    adv_sample, update_params=False,
+                agg_logging_output = super(AdversarialTrainer, self).train_step(
+                    adv_sample, update_params=self.adv_weight == 1,
                 )
             else:
                 # Add the adversarial input to the sample, effectively
@@ -298,9 +312,10 @@ class AdversarialTrainer(Trainer):
 
             self.meters["oom"].update(ooms_adv)
 
-        agg_logging_output = super(AdversarialTrainer, self).train_step(
-            sample, update_params=update_params,
-        )
+        if self.adv_weight < 1:
+            agg_logging_output = super(AdversarialTrainer, self).train_step(
+                sample, update_params=update_params,
+            )
 
         return agg_logging_output
 

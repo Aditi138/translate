@@ -7,9 +7,9 @@ source scripts/globals.sh
 BPE_N_OPS=30000
 
 # Create folders
-mkdir -p $IWLST2016_DIR
-mkdir -p $IWLST2016_DIR/orig
-mkdir -p $IWLST2016_DIR/test
+mkdir -p $IWSLT2016_DIR
+mkdir -p $IWSLT2016_DIR/orig
+mkdir -p $IWSLT2016_DIR/test
 
 # Helper function to remove xml tags from the training files
 function strip_xml_train () {
@@ -30,10 +30,10 @@ function strip_xml_test () {
 for lang_pair in "de-en" "fr-en" "cs-en"
 do
   # Destination
-  dir=$IWLST2016_DIR/$lang_pair
-  codes_dir=$IWLST2016_DIR/$lang_pair/codes
-  orig_dir=$IWLST2016_DIR/orig/$lang_pair
-  test_dir=$IWLST2016_DIR/test/$lang_pair
+  dir=$IWSLT2016_DIR/$lang_pair
+  codes_dir=$IWSLT2016_DIR/$lang_pair/codes
+  orig_dir=$IWSLT2016_DIR/orig/$lang_pair
+  test_dir=$IWSLT2016_DIR/test/$lang_pair
   # Source and target language
   src=`echo $lang_pair | cut -d"-" -f1`
   trg=`echo $lang_pair | cut -d"-" -f2`
@@ -43,22 +43,15 @@ do
 
   # Download train & dev
   wget -nc "https://wit3.fbk.eu/archive/2016-01//texts/$src/$trg/$lang_pair.tgz" -O "$lang_pair-train.tgz"
-  tar xvzf "$lang_pair-train.tgz" -C $IWLST2016_DIR/orig
+  tar xvzf "$lang_pair-train.tgz" -C $IWSLT2016_DIR/orig
 
   # Download test
-  if [ $lang_pair == "cs-en" ]
-  then
-    # Download cs test
-    wget -nc "https://wit3.fbk.eu/archive/2016-01-test//texts/en/cs/en-cs.tgz"
-    wget -nc "https://wit3.fbk.eu/archive/2016-01-test//texts/cs/en/cs-en.tgz"
-    tar xvzf  "en-cs.tgz" -C $IWLST2016_DIR/test *tst2015*
-    tar xvzf  "cs-en.tgz" -C $IWLST2016_DIR/test *tst2015*
-    mv $IWLST2016_DIR/test/en-cs/IWSLT16.TED.tst2015.en-cs.en.xml $IWLST2016_DIR/test/$lang_pair/IWSLT16.TED.tst2015.cs-en.en.xml
-  else
-    # Download test for other langauges
-    wget -nc "https://wit3.fbk.eu/archive/2017-01-trnted//texts/$src/$trg/$lang_pair.tgz" -O "$lang_pair-test.tgz"
-    tar xvzf  "$lang_pair-test.tgz" -C $IWLST2016_DIR/test *tst2015*
-  fi
+  wget -nc "https://wit3.fbk.eu/archive/2016-01-test//texts/en/${src}/en-${src}.tgz"
+  wget -nc "https://wit3.fbk.eu/archive/2016-01-test//texts/${src}/en/${src}-en.tgz"
+  tar xvzf  "en-${src}.tgz" -C $IWSLT2016_DIR/test *tst201*
+  tar xvzf  "${src}-en.tgz" -C $IWSLT2016_DIR/test *tst201*
+  mv $IWSLT2016_DIR/test/en-${src}/IWSLT16.TED.tst2015.en-${src}.en.xml $IWSLT2016_DIR/test/$lang_pair/IWSLT16.TED.tst2015.${src}-en.en.xml
+  mv $IWSLT2016_DIR/test/en-${src}/IWSLT16.TED.tst2016.en-${src}.en.xml $IWSLT2016_DIR/test/$lang_pair/IWSLT16.TED.tst2016.${src}-en.en.xml
 
   # Cleanup and compile train/dev/test
   # ---------------------------------
@@ -87,14 +80,14 @@ do
 
   # Strip xml tags from test files
   echo "Removing XML from the test data"
-  for test_xml in $IWLST2016_DIR/test/$lang_pair/*.xml
+  for test_xml in $IWSLT2016_DIR/test/$lang_pair/*.xml
   do
     strip_xml_test $test_xml ${test_xml%.xml}
   done
   # Test files = tst2015
   echo "Creating test set"
-  cat $test_dir/IWSLT1{6,7}.TED.tst2015.$lang_pair.$src > $dir/test.$lang_pair.$src
-  cat $test_dir/IWSLT1{6,7}.TED.tst2015.$lang_pair.$trg > $dir/test.$lang_pair.$trg
+  cat $test_dir/IWSLT16.TED.tst201{5,6}.$lang_pair.$src > $dir/test.$lang_pair.$src
+  cat $test_dir/IWSLT16.TED.tst201{5,6}.$lang_pair.$trg > $dir/test.$lang_pair.$trg
 
   # Preprocessing
   # -------------
@@ -143,5 +136,5 @@ do
 done
 
 # Final cleanup
-rm -r $IWLST2016_DIR/orig
-rm -r $IWLST2016_DIR/test
+rm -r $IWSLT2016_DIR/orig
+rm -r $IWSLT2016_DIR/test

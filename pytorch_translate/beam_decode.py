@@ -169,6 +169,9 @@ class SequenceGenerator(torch.nn.Module):
 
         attn = scores.new(bsz * beam_size, src_encoding_len, maxlen + 2)
         attn_buf = attn.clone()
+        
+        
+        nonpad_idxs = src_tokens.ne(self.pad)
 
         # list of completed sentences
         finalized = [[] for i in range(bsz)]
@@ -256,7 +259,9 @@ class SequenceGenerator(torch.nn.Module):
                 sents_seen.add(sent)
 
                 def get_hypo():
-                    _, alignment = attn_clone[i].max(dim=0)
+                    # remove padding tokens from attn scores
+                    hypo_attn = attn_clone[i][nonpad_idxs[sent]]
+                    _, alignment = hypo_attn.max(dim=0)
                     return {
                         "tokens": tokens_clone[i],
                         "score": score,

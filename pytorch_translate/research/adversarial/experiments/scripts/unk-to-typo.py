@@ -48,6 +48,8 @@ def get_parser():
 
 def make_oov(word, dic, args):
     """Modify a word to make it OOV (while keeping the meaning)"""
+    if word.endswith("@@"):
+        return make_oov(word[:-2], dic, args) + "@@"
     # If the word has more than 3 letters try scrambling them
     if len(word) > 3:
         # For a fixed number of steps
@@ -79,7 +81,7 @@ def main():
             adv_words = adv_line.strip().split()
             # This will be the new adversarial source
             new_adv_words = []
-            for src_word, adv_word in zip(src_words, adv_words):
+            for adv_word, src_word in zip(adv_words, src_words):
                 # Check whether the current adversarial word is an unk
                 # (if not no need to change it)
                 if adv_word == args.unk_token:

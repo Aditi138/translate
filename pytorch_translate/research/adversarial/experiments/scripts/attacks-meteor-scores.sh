@@ -38,28 +38,34 @@ echo "1.0"
 # Source METEOR for all constraints/attacks
 for constraint in "unconstrained" "nearest-neighbors" "unk-only"
 do
-  for attack in "random" "all_wrong" "force_long"
+  echo $constraint
+  #for attack in "random" "all_wrong" "force_long"
+  for attack in "all_wrong"
   do
     prefix="$attack.$constraint"
     # Extract adversarial source
-    if [ $constraint == "unk-only" ]
-    then
+    unzip -c $ZIP_FILE data.$prefix.$SUFFIX.$SRC.human_readable > /tmp/data.$prefix.$UNIQUE_ID.$SRC
+    #unzip -c $ZIP_FILE data.$prefix.$SUFFIX.$SRC > /tmp/data.$prefix.$UNIQUE_ID.$SRC
+    #if [ $constraint == "unk-only" ]
+    #then
       # For UnkOnly we use the human_readable post edited versions with OOV actual typos
-      unzip -c $ZIP_FILE data.$prefix.$SUFFIX.$SRC.human_readable > /tmp/data.$prefix.$UNIQUE_ID.$SRC
-    else
-      unzip -c $ZIP_FILE data.$prefix.$SUFFIX.$SRC > /tmp/data.$prefix.$UNIQUE_ID.$SRC
-    fi
+    #  unzip -c $ZIP_FILE data.$prefix.$SUFFIX.$SRC.human_readable > /tmp/data.$prefix.$UNIQUE_ID.$SRC
+    #else
+    #  unzip -c $ZIP_FILE data.$prefix.$SUFFIX.$SRC > /tmp/data.$prefix.$UNIQUE_ID.$SRC
+    #fi
 
     meteor /tmp/data.$prefix.$UNIQUE_ID.$SRC /tmp/data.$UNIQUE_ID.$SRC $SRC
   done
 done
 
+echo "target"
 # Meteor of the model's output on the original source
 meteor /tmp/data.base.$UNIQUE_ID.$TRG /tmp/data.$UNIQUE_ID.$TRG $TRG
 # Target METEOR for all constraints/attacks
 for constraint in "unconstrained" "nearest-neighbors" "unk-only"
 do
-  for attack in "random" "all_wrong" "force_long"
+  echo $constraint
+  for attack in "all_wrong"
   do
     prefix="$attack.$constraint"
     # Extract output of the model for this attack

@@ -118,6 +118,7 @@ python $PTT_DIR/generate.py \
   --target-text-file ${DATA_DIR}/dev.${SRC}-${TRG}.tok.${TRG} \
   --beam 5 \
   --max-tokens 2000 \
+  --replace-unk \
   --quiet \
   --translation-output-file $CKPT_DIR/dev.${SRC}-${TRG}.tok.out.${TRG}
 
@@ -135,6 +136,7 @@ python $PTT_DIR/generate.py \
   --target-text-file ${DATA_DIR}/test.${SRC}-${TRG}.tok.${TRG} \
   --beam 5 \
   --max-tokens 2000 \
+  --replace-unk \
   --quiet \
   --translation-output-file $CKPT_DIR/test.${SRC}-${TRG}.tok.out.${TRG}
 

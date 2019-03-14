@@ -110,6 +110,7 @@ python $PTT_DIR/generate.py \
   --beam 5 \
   --length-penalty 1.0 \
   --max-tokens 2000 \
+  --replace-unk \
   --quiet \
   --translation-output-file $CKPT_DIR/dev.${SRC}-${TRG}.tok.out.${TRG}
 
@@ -128,6 +129,7 @@ python $PTT_DIR/generate.py \
   --beam 5 \
   --length-penalty 1.0 \
   --max-tokens 2000 \
+  --replace-unk \
   --quiet \
   --translation-output-file $CKPT_DIR/test.${SRC}-${TRG}.tok.out.${TRG}
 

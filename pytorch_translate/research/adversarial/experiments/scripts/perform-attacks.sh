@@ -34,12 +34,17 @@ MODEL_FILE=$CKPT_DIR/averaged_checkpoint_best.pt
 SRC_DICT=$CKPT_DIR/dictionary-${SRC_LANG}.txt
 TRG_DICT=$CKPT_DIR/dictionary-${TRG_LANG}.txt
 
+# BPE models
+langpair=${SRC_LANG}-${TRG_LANG}
+SRC_BPE_CODES=$IWSLT2016_DIR/$langpair/codes/codes.$SRC_LANG
+TRG_BPE_CODES=$IWSLT2016_DIR/$langpair/codes/codes.$TRG_LANG
+
 # Attacks: these are all the criterions/objectives we'll test
 declare -A ATTACKS
 
-ATTACKS["random"]="--adversary random_swap --adv-criterion cross_entropy"
+#ATTACKS["random"]="--adversary random_swap --adv-criterion cross_entropy"
 ATTACKS["all_wrong"]="--adversary brute_force --adv-criterion all_bad_words --modify-gradient sign"
-ATTACKS["force_long"]="--adversary brute_force --adv-criterion force_words --force-not --words-list </s> --modify-gradient sign"
+#ATTACKS["force_long"]="--adversary brute_force --adv-criterion force_words --force-not --words-list </s> --modify-gradient sign"
 
 # Constraints: each attack will be tested under those 3 constraints
 declare -A CONSTRAINTS
@@ -114,7 +119,7 @@ function translate (){
     --source-text-file $SRC_FILE \
     --target-text-file $TMP_DIR/data.${TRG_LANG} \
     $TRANSLATE_OPTIONS \
-    --unk-replace \
+    --replace-unk \
     --quiet \
     --max-sentences 64 \
     --max-tokens 2000 \
@@ -135,6 +140,20 @@ function bleu (){
   # Bleu
   perl $MOSES_SCRIPTS/generic/multi-bleu-detok.perl \
     /tmp/gold.${TMP_ID}.txt < /tmp/hyp.${TMP_ID}.txt
+}
+
+function de_bpe (){
+  IN_FILE=$1
+  OUT_FILE=$2
+  cat $IN_FILE | sed -r 's/(@@ )|(@@ ?$)//g' > $OUT_FILE
+}
+
+function bpe_src (){
+  IN_FILE=$1
+  OUT_FILE=$2
+  $SUBWORD_NMT apply-bpe -c $SRC_BPE_CODES \
+    < $IN_FILE \
+    > $OUT_FILE
 }
 
 # Count the occurences of a certain word
@@ -194,6 +213,33 @@ do
         attack_out_file=$TMP_DIR/data.${prefix}.${SRC_LANG}
         # Attack
         attack "$whitebox_args" $attack_src_file $attack_trg_file $attack_out_file
+        # Make remove UNKs
+        if [[ $* == *--bpe* ]]
+        then
+            cat $attack_src_file |\
+              perl $MOSES_SCRIPTS/tokenizer/deescape-special-chars.perl \
+              > /tmp/src.$TMP_ID.deesc
+        else
+            cat "$TMP_DIR/data.${SRC_LANG}" |\
+              perl $MOSES_SCRIPTS/tokenizer/deescape-special-chars.perl \
+              > /tmp/src.$TMP_ID.deesc
+        fi
+        cat $attack_out_file |\
+          perl $MOSES_SCRIPTS/tokenizer/deescape-special-chars.perl \
+          > /tmp/atk.$TMP_ID.deesc
+        python scripts/unk-to-typo.py \
+          /tmp/src.$TMP_ID.deesc \
+          /tmp/atk.$TMP_ID.deesc \
+          --dictionary-file $SRC_DICT \
+          | perl $MOSES_SCRIPTS/tokenizer/escape-special-chars.perl \
+          > $attack_out_file
+        # De- and Re-BPE if needed
+        if [[ $* == *--bpe* ]]
+        then
+          cp $attack_out_file ${attack_out_file}.orig
+          de_bpe $attack_out_file /tmp/atk.$TMP_ID.debpe
+          bpe_src /tmp/atk.$TMP_ID.debpe $attack_out_file
+        fi
         # Translate
         out_file="$TMP_DIR/data.${prefix}.${TRG_LANG}"
         translate $attack_out_file $out_file $TRANSLATE_OPTIONS
